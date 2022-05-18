@@ -234,7 +234,7 @@
 #ifdef W3_ST3
       USE W3SRC3MD, ONLY: INSIN3
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       USE W3SRC4MD, ONLY: INSIN4, TAUT, TAUHFT, TAUHFT2, &
                           DELU, DELTAUW, DELUST, &
                           DELALP, DELTAIL, &
@@ -290,7 +290,7 @@
 !/ Local parameters
 !/
       INTEGER                 :: IGRD, IERR, I, J, MTH, MK, ISEA, IX, IY
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
  INTEGER                 :: IK, ITH, IK2, ITH2
 #endif
       INTEGER, ALLOCATABLE    :: MAPTMP(:,:)
@@ -392,6 +392,9 @@
 #endif
 #ifdef W3_ST6
       TNAME1 = 'BYDB input and dissipation    '
+#endif
+#ifdef W3_STX
+      TNAME1 = 'STX dissip + ST4 wind input   '
 #endif
 #ifdef W3_NL0
       TNAME2 = 'Not defined                   '
@@ -1416,6 +1419,44 @@
                        SIN6A0, SDS6ET, SDS6A1, SDS6A2,           &
                        SDS6P1, SDS6P2, SWL6S6, SWL6B1, SWL6CSTB1,&
                        SIN6WS, SIN6FC
+        END IF
+#endif
+!
+#ifdef W3_STX
+      IF ( WRITE ) THEN
+          CALL INSIN4(.TRUE.)
+          WRITE (NDSM)                                           &
+                ZZWND, AALPHA, ZZ0MAX, BBETA, SSINTHP, ZZALP,    &
+                TTAUWSHELTER, SSWELLFPAR, SSWELLF, SSINBR,       &
+                ZZ0RAT, SSDSC,                                   &
+                SSDSISO, SSDSBR, SSDSBT, SSDSBM, SSDSP,         &
+                SSDSCOS, SSDSDTH, WWNMEANP, WWNMEANPTAIL,SSTXFTF,&
+                SSTXFTFTAIL, SSTXFTWN, SSTXFTF, SSTXFTWN,        &
+                SSDSBRF1, SSDSBRF2, SSDSBRFDF,SSDSBCK, SSDSABK,  &
+                SSDSPBK, SSDSBINT, FFXPM, FFXFM, FFXFA,   &
+                SSDSHCK, DELUST, DELTAIL, DELTAUW,        &
+                DELU, DELALP, TAUT, TAUHFT, TAUHFT2,             &
+                IKTAB, DCKI, QBI, SATINDICES, SATWEIGHTS,        &
+                DIKCUMUL, CUMULW,                                &
+                SDSX_ALPHA_BK, SDSX_LW_MODULATION, SDSX_NUC,     & 
+                SDSX_NCP, SDSX_B_DISSIP, SDSX_WHITECAP_WIDTH
+				
+        ELSE
+          READ (NDSM,END=801,ERR=802,IOSTAT=IERR)                &
+                ZZWND, AALPHA, ZZ0MAX, BBETA, SSINTHP, ZZALP,    &
+                TTAUWSHELTER, SSWELLFPAR, SSWELLF, SSINBR,       &
+                ZZ0RAT, SSDSC,                                   &
+                SSDSISO, SSDSBR, SSDSBT, SSDSBM, SSDSP,         &
+                SSDSCOS, SSDSDTH, WWNMEANP, WWNMEANPTAIL,SSTXFTF,&
+                SSTXFTFTAIL, SSTXFTWN, SSTXFTF, SSTXFTWN,        &
+                SSDSBRF1, SSDSBRF2, SSDSBRFDF,SSDSBCK, SSDSABK,  &
+                SSDSPBK, SSDSBINT, FFXPM, FFXFM, FFXFA,   &
+                 SSDSHCK, DELUST, DELTAIL, DELTAUW,        &
+                DELU, DELALP, TAUT, TAUHFT, TAUHFT2,             &
+                IKTAB, DCKI, QBI, SATINDICES, SATWEIGHTS,        &
+                DIKCUMUL, CUMULW,                                &
+                SDSX_ALPHA_BK, SDSX_LW_MODULATION, SDSX_NUC,     & 
+                SDSX_NCP, SDSX_B_DISSIP, SDSX_WHITECAP_WIDTH
         END IF
 #endif
 !

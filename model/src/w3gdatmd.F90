@@ -617,7 +617,7 @@
 !
 ! Dimensions of tables for pre-computing of dissipation 
 !  
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       INTEGER,    PARAMETER   :: NKHS=2000, NKD=1300
       INTEGER,    PARAMETER   :: NDTAB=2000          
 #endif
@@ -872,7 +872,7 @@
                                  DDELTA2, ZZWND
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         INTEGER               :: SSWELLFPAR, SSDSISO, SSDSBRFDF
         INTEGER,  POINTER     :: IKTAB(:,:), SATINDICES(:,:)
         REAL,     POINTER     :: DCKI(:,:), SATWEIGHTS(:,:),CUMULW(:,:),QBI(:,:)
@@ -892,6 +892,13 @@
                                  SIN6WS, SIN6FC
         INTEGER               :: SDS6P1, SDS6P2
         LOGICAL               :: SDS6ET, SWL6S6, SWL6CSTB1
+#endif
+!
+#ifdef W3_STX
+        REAL                  :: SDSX_ALPHA_BK, SDSX_B_DISSIP,       &
+                                 SDSX_WHITECAP_WIDTH
+        LOGICAL               :: SDSX_LW_MODULATION
+        INTEGER               :: SDSX_NUC, SDSX_NCP
 #endif
       END TYPE SRCP
 !
@@ -1277,7 +1284,7 @@
                                  DDELTA1, DDELTA2,                    &
                                  SSDSCOS, SSDSDTH, SSDSBM(:)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       INTEGER, POINTER        :: SSWELLFPAR, SSDSISO,SSDSBRFDF,       &
                                  IKTAB(:,:), SATINDICES(:,:),SSDSDIK
       REAL, POINTER           :: DCKI(:,:), SATWEIGHTS(:,:),CUMULW(:,:),QBI(:,:)
@@ -1295,6 +1302,12 @@
                                  SIN6WS, SIN6FC
       INTEGER, POINTER        :: SDS6P1, SDS6P2
       LOGICAL, POINTER        :: SDS6ET, SWL6S6, SWL6CSTB1
+#endif
+#ifdef W3_STX
+      REAL,    POINTER        :: SDSX_ALPHA_BK, SDSX_B_DISSIP,       &
+                                 SDSX_WHITECAP_WIDTH
+      LOGICAL, POINTER        :: SDSX_LW_MODULATION
+      INTEGER, POINTER        :: SDSX_NUC, SDSX_NCP
 #endif
       REAL, POINTER           :: WWNMEANPTAIL, SSTXFTFTAIL
 !/
@@ -1951,7 +1964,7 @@
 !
 !/ ------------------------------------------------------------------- /
       USE W3SERVMD, ONLY: EXTCDE
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
   USE CONSTANTS, ONLY: RADE
 #endif
 #ifdef W3_S
@@ -1970,7 +1983,7 @@
 !/ Local parameters
 !/
       INTEGER, SAVE           :: MK2, MSPEC
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
   INTEGER                  :: SDSNTH
 #endif
 #ifdef W3_S
@@ -2043,7 +2056,7 @@
       SGRDS(IMOD)%DSII(:)=0.
       SGRDS(IMOD)%DDEN(:)=0.
       SGRDS(IMOD)%DDEN2(:)=0.
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       ALLOCATE ( MPARS(IMOD)%SRCPS%IKTAB(MK,NDTAB), &
                  MPARS(IMOD)%SRCPS%DCKI(NKHS,NKD),  &
                  MPARS(IMOD)%SRCPS%QBI(NKHS,NKD),   &
@@ -2629,7 +2642,7 @@
       SSTXFTWN => MPARS(IMOD)%SRCPS%SSTXFTWN
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       ZZWND    => MPARS(IMOD)%SRCPS%ZZWND
       AALPHA   => MPARS(IMOD)%SRCPS%AALPHA
       BBETA    => MPARS(IMOD)%SRCPS%BBETA
@@ -2683,6 +2696,15 @@
       SWL6S6 => MPARS(IMOD)%SRCPS%SWL6S6
       SWL6B1 => MPARS(IMOD)%SRCPS%SWL6B1
       SWL6CSTB1 => MPARS(IMOD)%SRCPS%SWL6CSTB1
+#endif
+!
+#ifdef W3_STX
+      SDSX_ALPHA_BK       => MPARS(IMOD)%SRCPS%SDSX_ALPHA_BK
+      SDSX_LW_MODULATION  => MPARS(IMOD)%SRCPS%SDSX_LW_MODULATION
+      SDSX_NUC            => MPARS(IMOD)%SRCPS%SDSX_NUC
+      SDSX_NCP            => MPARS(IMOD)%SRCPS%SDSX_NCP
+      SDSX_B_DISSIP       => MPARS(IMOD)%SRCPS%SDSX_B_DISSIP
+      SDSX_WHITECAP_WIDTH => MPARS(IMOD)%SRCPS%SDSX_WHITECAP_WIDTH
 #endif
 !
 !     Structure SRNLS

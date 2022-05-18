@@ -126,6 +126,8 @@
 !/    22-Mar-2021 : Add extra fields used in coupling   ( version 7.13 )
 !/    07-Jun-2021 : S_{nl5} GKE NL5 (Q. Liu)            ( version 7.13 ) 
 !/    19-Jul-2021 : Momentum and air density support    ( version 7.14 )
+!/    15-Sep-2021 : Origination of STX parametrisation  ( version 7.XX )
+!/                  (F. Leckler)
 !/
 !/    Copyright 2009-2013 National Weather Service (NWS),
 !/       National Oceanic and Atmospheric Administration.  All rights
@@ -307,6 +309,7 @@
 !     !/ST3   WAM 4+ input and dissipation.
 !     !/ST4   Ardhuin et al. (2009, 2010)
 !     !/ST6   BYDB source terms after Babanin, Young, Donelan and Banner.
+!     !/STX   Leckler et al. (202X)' source terms.
 !
 !     !/NL0   No nonlinear interactions.                 ( Choose one )
 !     !/NL1   Discrete interaction approximation.
@@ -421,6 +424,11 @@
       USE W3SRC6MD
       USE W3SWLDMD, ONLY : W3SWL6
       USE W3GDATMD, ONLY : SWL6S6
+#endif
+#ifdef W3_STX
+      USE W3SRCXMD, ONLY : W3SDSX
+      USE W3SRC4MD, ONLY : W3SPR4, W3SIN4
+      USE W3GDATMD, ONLY : ZZWND, FFXFM, FFXPM, FFXFA
 #endif
 #ifdef W3_NL1
       USE W3SNL1MD
@@ -571,7 +579,7 @@
 #ifdef W3_ST3
       REAL                    :: FMEANS, FH1, FH2
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       REAL                    :: FMEANS, FH1, FH2, FAGE, DLWMEAN
 #endif
       REAL                    :: QCERR  = 0.     !/XNL2 and !/NNT
@@ -642,9 +650,12 @@
 #ifdef W3_ST3
       LOGICAL                 :: LLWS(NSPEC)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       LOGICAL                 :: LLWS(NSPEC)
       REAL                    :: BRLAMBDA(NSPEC)
+#endif
+#ifdef W3_STX
+      REAL                    :: C(NSPEC) 
 #endif
 #ifdef W3_IS2
       DOUBLE PRECISION        :: SCATSPEC(NTH)
@@ -714,7 +725,7 @@
       VSIN = 0.
       VDIN = 0.
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       VSIN = 0.
       VDIN = 0.
 #endif
@@ -782,7 +793,7 @@
 #ifdef W3_ST2
       ZWND   = ZWIND
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       ZWND   = ZZWND
 #endif
 #ifdef W3_ST6
@@ -859,10 +870,13 @@
      END IF
 #endif
 
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       DLWMEAN= 0.
       BRLAMBDA(:)=0.
       WHITECAP(:)=0.
+#endif
+#ifdef W3_STX
+      C(:)=0.
 #endif
 !
 ! 1.c Set mean parameters
@@ -902,7 +916,7 @@
                    TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS)
       TWS = 1./FMEANWS
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       TAUWX=0.
       TAUWY=0.
       IF ( IT .eq. 0 ) THEN
@@ -931,7 +945,7 @@
 #endif
 #endif
 
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         CALL W3SIN4 ( SPEC, CG1, WN2, U10ABS, USTAR, DRAT, AS,       &
                  U10DIR, Z0, CD, TAUWX, TAUWY, TAUWAX, TAUWAY,       &
                  VSIN, VDIN, LLWS, IX, IY, BRLAMBDA )
@@ -952,7 +966,7 @@
 #endif
 #endif
 
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       CALL W3SPR4 (SPEC, CG1, WN1, EMEAN, FMEAN, FMEAN1, WNMEAN, &
                    AMAX, U10ABS, U10DIR,                         &
 #ifdef W3_FLX5
@@ -1008,11 +1022,9 @@
 #ifdef W3_ST3
       FHIGH  = MAX(FFXFM * MAX(FMEAN,FMEANWS),FFXPM / USTAR)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
 ! Introduces a Long & Resio (JGR2007) type dependance on wave age
-#endif
 ! !/ST4      FAGE   = FFXFA*TANH(0.3*U10ABS*FMEANWS*TPI/GRAV)
-#ifdef W3_ST4
       FAGE   = 0.
       FHIGH  = MAX( (FFXFM + FAGE ) * MAX(FMEAN1,FMEANWS), FFXPM / USTAR)
       FHIGI  = FFXFA * FMEAN1
@@ -1070,7 +1082,7 @@
                  U10DIR, Z0, CD, TAUWX, TAUWY, TAUWAX, TAUWAY,       &
                  ICE, VSIN, VDIN, LLWS, IX, IY )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         CALL W3SIN4 ( SPEC, CG1, WN2, U10ABS, USTAR, DRAT, AS,       &
                  U10DIR, Z0, CD, TAUWX, TAUWY, TAUWAX, TAUWAY,       &
                  VSIN, VDIN, LLWS, IX, IY, BRLAMBDA )
@@ -1148,6 +1160,9 @@
 
 #ifdef W3_ST6
         CALL W3SDS6 ( SPEC, CG1, WN1,                   VSDS, VDDS )
+#endif
+#ifdef W3_STX
+        CALL W3SDSX ( SPEC, CG1, WN1, DEPTH, VSDS, VDDS, C, BRLAMBDA, WHITECAP)
 #endif
 !
 #ifdef W3_PDLIB
@@ -1555,7 +1570,7 @@
                      WNMEAN, AMAX, U10ABS, U10DIR, USTAR, USTDIR, &
                      TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         CALL W3SPR4 (SPEC, CG1, WN1, EMEAN, FMEAN, FMEAN1, WNMEAN,&
                    AMAX, U10ABS, U10DIR,                          &
 #ifdef W3_FLX5
@@ -1614,13 +1629,13 @@
                       FH1*TPIINV, FH2*TPIINV, FHIGH*TPIINV, NKH
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
 ! Introduces a Long & Resio (JGR2007) type dependance on wave age
         FAGE   = FFXFA*TANH(0.3*U10ABS*FMEANWS*TPI/GRAV)
         FH1    = (FFXFM+FAGE) * FMEAN1
 #endif
 
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         FH2    = FFXPM / USTAR
         FHIGH  = MIN ( SIG(NK) , MAX ( FH1 , FH2 ) )
         NKH    = MAX ( 2 , MIN ( NKH1 ,                           &
@@ -1695,7 +1710,7 @@
                       U10DIR, Z0, CD, TAUWX, TAUWY, TAUWAX, TAUWAY, &
                       ICE, VSIN, VDIN, LLWS, IX, IY )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         CALL W3SIN4 ( SPEC, CG1, WN2, U10ABS, USTAR, DRAT, AS,      &
                       U10DIR, Z0, CD, TAUWX, TAUWY, TAUWAX, TAUWAY, &
                       VSIN, VDIN, LLWS, IX, IY, BRLAMBDA )
@@ -2063,7 +2078,7 @@
               ' ------------- NEW DYNAMIC INTEGRATION LOOP',          &
               ' ------------- ')
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
  9006 FORMAT (' TEST W3SRCE : FHIGH (3X) : ',3F8.4/                   &
               ' ------------- NEW DYNAMIC INTEGRATION LOOP',          &
               ' ------------- ')
@@ -2090,7 +2105,7 @@
  9062 FORMAT (' TEST W3SRCE : FHIGH (3X) : ',3F8.4/                   &
               '               NKH        : ',I3)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
  9062 FORMAT (' TEST W3SRCE : FHIGH (3X) : ',3F8.4/                   &
               '               NKH        : ',I3)
 #endif

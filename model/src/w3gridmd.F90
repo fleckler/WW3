@@ -840,7 +840,7 @@
                                  SDSDELTA1, SDSDELTA2
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       INTEGER                 :: SWELLFPAR, SDSISO, SDSBRFDF
       REAL 		   :: SDSBCHOICE
       REAL                    :: ZWND, ALPHA0, Z0MAX, BETAMAX, SINTHP,&
@@ -865,6 +865,11 @@
                                  SDSA1, SDSA2, SWLB1
       INTEGER                 :: SDSP1, SDSP2
       LOGICAL                 :: SDSET, CSTB1
+#endif
+#ifdef W3_STX
+      REAL                    :: ALPHA_BK, B_DISSIP, WHITECAP_WIDTH
+      LOGICAL                 :: LW_MODULATION
+      INTEGER                 :: NUC, NCP
 #endif
 !
 #ifdef W3_NL1
@@ -992,7 +997,7 @@
       NAMELIST /SIN3/ ZWND, ALPHA0, Z0MAX, BETAMAX, SINTHP, ZALP, &
                       SWELLF
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       NAMELIST /SIN4/ ZWND, ALPHA0, Z0MAX, BETAMAX, SINTHP, ZALP, &
                       TAUWSHELTER, SWELLFPAR, SWELLF,                 &
                       SWELLF2, SWELLF3, SWELLF4, SWELLF5, SWELLF6,    &
@@ -1029,7 +1034,7 @@
       NAMELIST /SDS3/ SDSC1, WNMEANP, FXPM3, FXFM3, SDSDELTA1,        &
                       SDSDELTA2
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       NAMELIST /SDS4/ SDSBCHOICE, WNMEANP, WNMEANPTAIL, FXPM3, FXFM3, &
                       FXFMAGE, SDSC2, SDSCUM, SDSSTRAIN, SDSSTRAINA,  &
                       SDSSTRAIN2, SDSC4, SDSFACMTF, SDSNMTF,SDSCUMP,  &
@@ -1045,6 +1050,12 @@
       NAMELIST /SDS6/ SDSET, SDSA1, SDSA2, SDSP1, SDSP2
       NAMELIST /SWL6/ SWLB1, CSTB1
 #endif
+
+#ifdef W3_STX
+      NAMELIST /SDSX/ ALPHA_BK, LW_MODULATION, NUC, NCP, B_DISSIP,    &
+                      WHITECAP_WIDTH 
+#endif
+
 #ifdef W3_BT1
       NAMELIST /SBT1/ GAMMA
 #endif
@@ -1429,6 +1440,10 @@
       NRSRCE = NRSRCE + 1
       FLST6  = .TRUE.
 #endif
+#ifdef W3_STX
+      NRSRCE = NRSRCE + 1
+      FLST4  = .TRUE.
+#endif
 !
 #ifdef W3_NL0
       NRNL   = NRNL + 1
@@ -1708,12 +1723,16 @@
       ZALP   = 0.0110
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       ZWND   =   10.
       ALPHA0 = 0.0095
       Z0MAX = 0.0    
       Z0RAT = 0.04 
+#if defined(W3_ST4)
       BETAMAX   = 1.43     
+#elif defined(W3_STX)
+      BETAMAX   = 1.05
+#endif
       SINTHP    = 2.     
       SWELLF    = 0.66     
       SWELLFPAR = 1
@@ -1786,7 +1805,7 @@
       SSWELLF(1) = SWELLF
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       CALL READNL ( NDSS, 'SIN4', STATUS )
       WRITE (NDSO,920) STATUS
       WRITE (NDSO,921) ALPHA0, BETAMAX, SINTHP, Z0MAX, ZALP, ZWND, TAUWSHELTER, &
@@ -1875,7 +1894,7 @@
 #ifdef W3_ST3
       FACHF  = 5.
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       FACHF  = 5.
 #endif
 #ifdef W3_ST6
@@ -2083,7 +2102,7 @@
       SDSDELTA2 = 0.6 !! This is Bidlot et al. 2005,  Otherwise WAM4 uses 0.5
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       WNMEANP = 0.5    ! taken from Bidlot et al. 2005
       FXFM3 = 2.5 
       FXFMAGE = 0. 
@@ -2143,6 +2162,15 @@
       SWLB1  = 0.41E-02
 #endif
 !
+#ifdef W3_STX
+      ALPHA_BK       = 0.30
+      LW_MODULATION  = .TRUE.
+      NUC            = 51
+      NCP            = (NK*10) -1
+      B_DISSIP       = 0.005 
+      WHITECAP_WIDTH = 0.18
+#endif
+!
 #ifdef W3_ST1
       CALL READNL ( NDSS, 'SDS1', STATUS )
       WRITE (NDSO,924) STATUS
@@ -2195,7 +2223,7 @@
       DDELTA2   = SDSDELTA2
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       CALL READNL ( NDSS, 'SDS4', STATUS )
       WRITE (NDSO,924) STATUS
       WRITE (NDSO,925) SDSC2, SDSBCK, SDSCUM, WNMEANP 
@@ -2220,9 +2248,7 @@
       SSDSC(19)  = SDSNMTF 
       SSDSC(20)  = SDSCUMP 
       SSDSC(21)  = SDSNUW 
-#endif
 !
-#ifdef W3_ST4
       SSDSBR   = SDSBR
       SSDSBRF1 = SDSBRF1
       SSDSBRFDF= SDSBRFDF
@@ -2271,6 +2297,26 @@
          WRITE (NDSO,940) YESXNO(J), '(constant)           ' ,SWL6B1
       ELSE
          WRITE (NDSO,940) YESXNO(J), '(steepness dependent)' ,SWL6B1
+      END IF
+#endif
+
+#ifdef W3_STX
+      CALL READNL ( NDSS, 'SDSX', STATUS )
+      WRITE (NDSO,9240) STATUS
+      SDSX_ALPHA_BK       = ALPHA_BK
+      SDSX_LW_MODULATION  = LW_MODULATION
+      SDSX_NUC            = NUC
+      SDSX_NCP            = NCP
+      SDSX_B_DISSIP       = B_DISSIP
+      SDSX_WHITECAP_WIDTH = WHITECAP_WIDTH
+      IF (SDSX_LW_MODULATION) THEN
+        WRITE (NDSO,9250) SDSX_ALPHA_BK, YESXNO(1), &
+               SDSX_NUC, SDSX_NCP, SDSX_B_DISSIP, &
+               SDSX_WHITECAP_WIDTH 
+      ELSE
+        WRITE (NDSO,9250) SDSX_ALPHA_BK, YESXNO(2), &
+               SDSX_NUC, SDSX_NCP, SDSX_B_DISSIP, &
+               SDSX_WHITECAP_WIDTH 
       END IF
 #endif
 !
@@ -3216,7 +3262,7 @@
           WRITE (NDSO,2920) ZWND, ALPHA0, Z0MAX, BETAMAX, SINTHP, ZALP,   &
             SWELLF
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
           WRITE (NDSO,2920) ZWND, ALPHA0, Z0MAX, BETAMAX, SINTHP, ZALP,   &
             TAUWSHELTER, SWELLFPAR, SWELLF, SWELLF2, SWELLF3, SWELLF4, &
             SWELLF5, SWELLF6, SWELLF7, Z0RAT, SINBR
@@ -3272,7 +3318,7 @@
                             SDSDELTA2
 #endif
 
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
           WRITE (NDSO,2924) SDSBCHOICE, SDSC2, SDSCUM, SDSC4,         &
                             SDSC5, SDSC6, &
                     WNMEANP, FXPM3, FXFM3, FXFMAGE,                   &
@@ -3286,6 +3332,10 @@
 #ifdef W3_ST6
           WRITE (NDSO,2924) SDSET, SDSA1, SDSA2, SDSP1, SDSP2
           WRITE (NDSO,2937) SWLB1, CSTB1
+#endif
+#ifdef W3_STX
+          WRITE (NDSO,29240) ALPHA_BK, LW_MODULATION, &
+                            NUC, NCP, B_DISSIP, WHITECAP_WIDTH 
 #endif
 #ifdef W3_BT1
           WRITE (NDSO,2926) GAMMA
@@ -3453,7 +3503,7 @@
       SSTXFTWN    = STXFTWN
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       STXFTF      = 1/(FACHF-1.-WNMEANP*2)                       &
                            * SIG(NK)**(2+WNMEANP*2) * DTH
       STXFTFTAIL  = 1/(FACHF-1.-WNMEANPTAIL*2)                   &
@@ -6328,7 +6378,7 @@
               '        SWELLF =',F8.5,'R /'/)                              
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
   920 FORMAT (/'  Wind input (WAM 4+) ',A/                            &
         ' --------------------------------------------------')
   921 FORMAT ( '       minimum Charnock coeff.     :',F10.4/          &
@@ -6493,16 +6543,12 @@
                ' /')                               
 #endif
 !
-#ifdef W3_ST4
-  924 FORMAT (/' Dissipation (Ardhuin / Filipot / Romero ) ',A/          &
+#if defined(W3_ST4) || defined(W3_STX)
+  924 FORMAT (/' Dissipation (Ardhuin / Filipot / Romero ) ',A/  &
         ' --------------------------------------------------')
   925 FORMAT ( '       SDSC2, SDSBCK, SDSCUM       :',3E11.3/    &
                '       Power of k in mean k        :',F8.2/)      
-#endif
-
-
-#ifdef W3_ST4
- 2924 FORMAT ( '  &SDS4 SDSBCHOICE = ',F3.1,                       &
+ 2924 FORMAT ( '  &SDS4 SDSBCHOICE = ',F3.1,                     &
                ', SDSC2 =',E12.4,', SDSCUM =',F6.2,', '/         &
                '        SDSC4 =',F6.2,', SDSC5 =',E12.4,         &
                ', SDSC6 =',E12.4,','/                            &
@@ -6545,6 +6591,24 @@
   940 FORMAT ( '  subroutine W3SWL6 activated           : ',A/      &
                '   coefficient b1 ',A,                ' : ',E9.3/   )
  2937 FORMAT ( '  &SWL6 SWLB1 = ',E9.3,', CSTB1 = ',L,' /')
+#endif
+
+#ifdef W3_STX
+ 9240 FORMAT (/'  Dissipation (Leckler et al., 202X) ', A/          &
+               ' --------------------------------------------------')
+ 9250 FORMAT ( '  alpha (linear breaking threshold)       :  ',F5.3/&
+               '  Long wave modulation                    :  ',A/   &
+               '  Nuc                                     :  ',I5/  &
+               '  Ncp                                     :  ',I5/  &
+               '  b (breaking dissipation factor)         :  ',F5.3/&
+               '  whitecap width (wwc and wcf comp.)      :  ',F5.3/&
+               ' ')
+29240 FORMAT ( '  &SDSX ALPHA_BK       = ', F5.3/                    &
+               '        LW_MODULATION  = ', L/                       &
+               '        NUC            = ', I5/                      &
+               '        NCP            = ', I5/                      &
+               '        B_DISSIP       = ', F5.3/                    &
+               '        WHITECAP_WIDTH = ', F5.3,' /'                )
 #endif
 !
 #ifdef W3_BT0
@@ -7375,7 +7439,7 @@
                         CASE('SIN3')
                           READ (NDS,NML=SIN3,END=801,ERR=802,IOSTAT=J)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                         CASE('SIN4')
                           READ (NDS,NML=SIN4,END=801,ERR=802,IOSTAT=J)
 #endif
@@ -7427,7 +7491,7 @@
                         CASE('SDS3')
                           READ (NDS,NML=SDS3,END=801,ERR=802,IOSTAT=J)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                         CASE('SDS4')
                           READ (NDS,NML=SDS4,END=801,ERR=802,IOSTAT=J)
 #endif
@@ -7437,6 +7501,11 @@
                         CASE('SWL6')
                           READ (NDS,NML=SWL6,END=801,ERR=802,IOSTAT=J)
 #endif
+#ifdef W3_STX
+                        CASE('SDSX')
+                          READ (NDS,NML=SDSX,END=801,ERR=802,IOSTAT=J)
+#endif
+
 #ifdef W3_BT1
                         CASE('SBT1')
                           READ (NDS,NML=SBT1,END=801,ERR=802,IOSTAT=J)

@@ -112,7 +112,7 @@ check_switches()
 #sort:sterm:
       sterm  ) TY='one'
                ID='input/whitecapping'
-               OK='ST0 ST1 ST2 ST3 ST4 ST6' ;;
+               OK='ST0 ST1 ST2 ST3 ST4 ST6 STX' ;;
 #sort:stab:
       stab   ) TY='upto1'
                ID='stability correction'
@@ -626,6 +626,8 @@ switch_files()
         stx='w3src4md' ;;
    ST6) st='w3src6md w3swldmd'
         stx='w3src6md' ;;
+   STX) st='w3srcXmd w3src4md'
+        stx='w3srcXmd  w3src4md' ;;
   esac
 
   case $s_nl in

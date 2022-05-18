@@ -1494,6 +1494,10 @@
       USE W3SWLDMD, ONLY : W3SWL6
       USE W3GDATMD, ONLY : SWL6S6
 #endif
+#ifdef W3_STX
+      USE W3SRCXMD, ONLY : W3SDSX
+      USE W3SRC4MD, ONLY : W3SPR4, W3SIN4
+#endif
 #ifdef W3_NL1
       USE W3SNL1MD
 #endif
@@ -1603,10 +1607,13 @@
       REAL                    :: AMAX, FMEANS, FMEANWS, TAUWX, TAUWY, &
                                  TAUWNX, TAUWNY
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       REAL                    :: AMAX, FMEANS, FMEANWS, TAUWX, TAUWY, &
                                  TAUWNX, TAUWNY, FMEAN1, WHITECAP(1:4)
       REAL                    :: LAMBDA(NSPEC), DLWMEAN
+#endif
+#ifdef W3_STX
+      REAL                    :: C(NSPEC)
 #endif
 #ifdef W3_ST6
       REAL                    :: AMAX, TAUWX, TAUWY, TAUWNX, TAUWNY
@@ -1633,7 +1640,7 @@
 #ifdef W3_ST3
       LOGICAL                 :: LLWS(NSPEC)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       LOGICAL                 :: LLWS(NSPEC)
 #endif
 !
@@ -2045,7 +2052,7 @@
                 TAUWY  = 0.
                 LLWS(:)  = .TRUE.
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 LLWS(:)  = .TRUE.
                 ZWND   = ZZWND
                 TAUWX  = 0.
@@ -2069,7 +2076,7 @@
                              WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD,&
                              TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN, FMEAN1,       &
                              WNMEAN, AMAX, UABS, UDIRR,             &
 #ifdef W3_FLX5
@@ -2119,7 +2126,7 @@
                              WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD,&
                              TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                   IX=1
                   IY=1
                    CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN, FMEAN1,      &
@@ -2129,8 +2136,13 @@
 #endif
                              USTAR, USTD, TAUWX, TAUWY, CD, Z0,       &
                              CHARN, LLWS, FMEANWS,DLWMEAN )
+#ifdef W3_ST4
                    CALL W3SDS4 ( A, WN, CG, USTAR,  USTD, DEPTH, DAIR, XDS, &
                               DIA, IX, IY, LAMBDA, WHITECAP, DLWMEAN )
+#endif
+#ifdef W3_STX
+                   CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+#endif
                    CALL W3SIN4 (A, CG, WN2, UABS, USTAR, DAIR/DWAT,     &
                            ASO(J), UDIRR, Z0, CD, TAUWX, TAUWY, TAUWNX, &
                            TAUWNY, XIN, DIA, LLWS, IX, IY, LAMBDA )
@@ -2219,7 +2231,7 @@
                 TAUWX  = 0.
                 TAUWY  = 0.
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 ZWND   = ZZWND
                 USTAR  = 0.
                 USTD   = 0.
@@ -2249,7 +2261,7 @@
                              WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD,&
                              TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN,  FMEAN1,        &
                              WNMEAN, AMAX, UABS, UDIRR,               &
 #ifdef W3_FLX5
@@ -2257,8 +2269,16 @@
 #endif
                              USTAR, USTD, TAUWX, TAUWY, CD, Z0,       &
                               CHARN, LLWS, FMEANWS, DLWMEAN )
+#ifdef W3_ST4
                 CALL W3SDS4 ( A, WN, CG, USTAR,  USTD, DEPTH, DAIR, XDS, &
                              DIA, IX, IY, LAMBDA, WHITECAP, DLWMEAN )
+#endif
+#ifdef W3_STX
+                print*, 'Reach  W3SDSX ...'
+                !print*, 'A=', A
+                CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+                !print*, 'XDS=', XDS
+#endif
 #endif
 #ifdef W3_ST6
                 CALL W3SPR6 (A, CG, WN, EMEAN, FMEAN, WNMEAN, AMAX, FP)
@@ -2300,7 +2320,7 @@
                                 ASO(J), UDIRR, Z0, CD,TAUWX, TAUWY, &
                                 TAUWNX, TAUWNY, ICE, XIN, DIA, LLWS, IX, IY )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                   CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN, FMEAN1,       &
                              WNMEAN, AMAX, UABS, UDIRR,               &
 #ifdef W3_FLX5
@@ -2345,7 +2365,7 @@
                             ICE, XIN, DIA, LLWS, IX, IY )
 #endif
 !
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                     CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN, FMEAN1,     &
                              WNMEAN, AMAX, UABS, UDIRR,               &
 #ifdef W3_FLX5
@@ -2353,8 +2373,13 @@
 #endif
                              USTAR, USTD, TAUWX, TAUWY, CD, Z0,       &
                              CHARN, LLWS, FMEANWS, DLWMEAN )
+#ifdef W3_ST4
                     CALL W3SDS4 ( A, WN, CG, USTAR,  USTD, DEPTH, DAIR, XDS, &
                               DIA, IX, IY, LAMBDA, WHITECAP, DLWMEAN )
+#endif
+#ifdef W3_STX
+                    CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+#endif
                     CALL W3SIN4 (A, CG, WN2, UABS, USTAR, DAIR/DWAT,    &
                            ASO(J), UDIRR, Z0, CD, TAUWX, TAUWY, TAUWNX, &
                            TAUWNY, XIN, DIA, LLWS, IX, IY, LAMBDA )
@@ -2391,7 +2416,7 @@
                     CALL W3SDS3 ( A, WN, CG, EMEAN, FMEANS, WNMEAN,  &
                                   USTAR, USTD, DEPTH, XDS, DIA, IX, IY )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                     CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN, FMEAN1,       &
                              WNMEAN, AMAX, UABS, UDIRR,                 &
 #ifdef W3_FLX5
@@ -2399,8 +2424,13 @@
 #endif
                              USTAR, USTD, TAUWX, TAUWY, CD, Z0,         &
                              CHARN, LLWS, FMEANWS, DLWMEAN )
+#ifdef W3_ST4
                     CALL W3SDS4 ( A, WN, CG,  USTAR, USTD, DEPTH, DAIR, XDS, &
                                   DIA, IX, IY, LAMBDA, WHITECAP , DLWMEAN)
+#endif
+#ifdef W3_STX
+                    CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+#endif
 #endif
 #ifdef W3_ST6
                     CALL W3SDS6 ( A, CG, WN, XDS, DIA )
@@ -2918,6 +2948,14 @@
               IF ( FLSRCE(4) )  IRET=NF90_PUT_VAR(NCID,VARID(19),   &
                  TRANSPOSE(SDS(1:NK,1:NTH)), start=(/1,1,J1,IOUT/), &
                  count=(/NTH,NK,1,1/)                               )
+#ifdef W3_STX
+              IF ( FLSRCE(4) )  IRET=NF90_PUT_VAR(NCID,VARID(23),   &
+                 RESHAPE(C,(/NTH, NK/)),     start=(/1,1,J1,IOUT/), &
+                 count=(/NTH,NK,1,1/)                               )
+              IF ( FLSRCE(4) )  IRET=NF90_PUT_VAR(NCID,VARID(24),   &
+                 RESHAPE(LAMBDA,(/NTH, NK/)), start=(/1,1,J1,IOUT/), &
+                 count=(/NTH,NK,1,1/)                               )
+#endif
               IF ( FLSRCE(5) )  IRET=NF90_PUT_VAR(NCID,VARID(20),   &
                  TRANSPOSE(SBT(1:NK,1:NTH)), start=(/1,1,J1,IOUT/), &
                  count=(/NTH,NK,1,1/)                               )
@@ -5385,6 +5423,57 @@
             IRET=NF90_PUT_ATT(NCID,VARID(19),'associates','time station frequency direction')
 #ifdef W3_RTD
             IRET=NF90_PUT_ATT(NCID,VARID(19),'direction_reference','Rotated Pole Grid North')
+#endif
+
+#ifdef W3_STX
+! c_bk
+            IRET=NF90_DEF_VAR(NCID,'crest_speed',NF90_FLOAT,(/DIMID(5),DIMID(4),DIMID(TWO),DIMID(ONE)/),VARID(23))
+            IF (NCTYPE.EQ.4) IRET=NF90_DEF_VAR_DEFLATE(NCID, VARID(23), 1, 1, DEFLATE)
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'long_name','breaking crest speed')
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'units','m s rad-1')
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'scale_factor',1.)
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'add_offset',0.)
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'valid_min',0.)
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'valid_max',100.)
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'_FillValue',NF90_FILL_FLOAT)
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'content','TXYZ')
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'associates','time station frequency direction')
+#ifdef W3_RTD
+            IRET=NF90_PUT_ATT(NCID,VARID(23),'direction_reference','Rotated Pole Grid North')
+#endif
+
+! lambda1
+            IRET=NF90_DEF_VAR(NCID,'lambda1',NF90_FLOAT,(/DIMID(5),DIMID(4),DIMID(TWO),DIMID(ONE)/),VARID(24))
+            IF (NCTYPE.EQ.4) IRET=NF90_DEF_VAR_DEFLATE(NCID, VARID(24), 1, 1, DEFLATE)
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'long_name','breaking crest lenght density')
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'units','m s rad-1')
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'scale_factor',1.)
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'add_offset',0.)
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'valid_min',0.)
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'valid_max',100.)
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'_FillValue',NF90_FILL_FLOAT)
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'content','TXYZ')
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'associates','time station frequency direction')
+#ifdef W3_RTD
+            IRET=NF90_PUT_ATT(NCID,VARID(24),'direction_reference','Rotated Pole Grid North')
+#endif
+!
+! lambda2
+!            IRET=NF90_DEF_VAR(NCID,'lambda2',NF90_FLOAT,(/DIMID(5),DIMID(4),DIMID(TWO),DIMID(ONE)/),VARID(25))
+!            IF (NCTYPE.EQ.4) IRET=NF90_DEF_VAR_DEFLATE(NCID, VARID(25), 1, 1, DEFLATE)
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'long_name','breaking crest lenght density (modulated)')
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'units','m s rad-1')
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'scale_factor',1.)
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'add_offset',0.)
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'valid_min',0.)
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'valid_max',100.)
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'_FillValue',NF90_FILL_FLOAT)
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'content','TXYZ')
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'associates','time station frequency direction')
+!#ifdef W3_RTD
+!            IRET=NF90_PUT_ATT(NCID,VARID(25),'direction_reference','Rotated Pole Grid North')
+!#endif
+          
 #endif
           ENDIF
 

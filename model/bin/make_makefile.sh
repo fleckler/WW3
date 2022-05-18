@@ -359,6 +359,7 @@
          'W3SRC3MD'     ) modtest=w3src3md.o ;;
          'W3SRC4MD'     ) modtest=w3src4md.o ;;
          'W3SRC6MD'     ) modtest=w3src6md.o ;;
+         'W3SRCXMD'     ) modtest=w3srcXmd.o ;;
          'W3SNL1MD'     ) modtest=w3snl1md.o ;;
          'W3SNL2MD'     ) modtest=w3snl2md.o ;;
          'W3SNL3MD'     ) modtest=w3snl3md.o ;;

@@ -2038,7 +2038,7 @@
         FP1 (JSEA) = UNDEF
         IKP1(JSEA) = 0
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         FP1 (JSEA) = UNDEF
         IKP1(JSEA) = 0
 #endif
@@ -2090,7 +2090,7 @@
                  .AND. SIG(IK).LT.0.75*SIG(NK) )           &
               IKP1(JSEA) = IK
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
           IF ( IKP1(JSEA).EQ.0                             &
                  .AND. EBD(IK-1,JSEA).LT.EBD(IK,JSEA)      &
                  .AND. EBD(IK-1,JSEA).LT.EBD(IK+1,JSEA)    &
@@ -2119,7 +2119,7 @@
 #ifdef W3_ST3
         IF ( IKP1(JSEA) .NE. 0 ) FP1(JSEA) = SIG(IKP1(JSEA)) * TPIINV
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         IF ( IKP1(JSEA) .NE. 0 ) FP1(JSEA) = SIG(IKP1(JSEA)) * TPIINV
 #endif
         END DO
@@ -2169,7 +2169,7 @@
         FP1(JSEA) = FP1(JSEA) * ( 1. + 0.5 * (XL2*EH - XH2*EL )  &
                        / SIGN ( MAX(ABS(DENOM),1.E-15) , DENOM ) )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
         ILOW   = MAX (  1 , IKP1(JSEA)-1 )
         ICEN   = MAX (  1 , IKP1(JSEA)   )
         IHGH   = MIN ( NK , IKP1(JSEA)+1 )

@@ -566,6 +566,8 @@
 !/    16-Jul-2012 : Move GMD (SNL3) and nonlinear filter (SNLS)
 !/                  from 3.15 (HLT).                    ( version 4.08 )
 !/    18-Aug-2018 : S_{ice} IC5 (Q. Liu)                ( version 6.06 )
+!/    15-Sep-2021 : Origination of STX parametrisation  ( version 7.XX )
+!/                  (F. Leckler)
 !/
 !  1. Purpose :
 !
@@ -666,6 +668,10 @@
       USE W3SWLDMD, ONLY : W3SWL6
       USE W3GDATMD, ONLY : SWL6S6
 #endif
+#ifdef W3_STX
+      USE W3SRCXMD, ONLY : W3SDSX
+      USE W3SRC4MD, ONLY : W3SPR4, W3SIN4
+#endif
 #ifdef W3_NL1
       USE W3SNL1MD
 #endif
@@ -752,7 +758,7 @@
       REAL                    :: FMEANS, FMEANWS, TAUWX, TAUWY, AMAX, &
                                  TAUWNX, TAUWNY
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       REAL                    :: FMEANWS, TAUWX, TAUWY, AMAX, &
                                  TAUWNX, TAUWNY,  FMEAN1, WHITECAP(1:4), DLWMEAN
 #endif
@@ -788,9 +794,12 @@
 #ifdef W3_ST3
       LOGICAL                :: LLWS(NTH,NK) 
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       LOGICAL                :: LLWS(NTH,NK)
       REAL                   :: LAMBDA(NSPEC)
+#endif
+#ifdef W3_STX
+      REAL                   :: C(NSPEC)
 #endif
       CHARACTER               :: DTME21*23
 !/
@@ -1032,7 +1041,7 @@
             LLWS(:,:)  = .TRUE.
 #endif
                  USTAR  = 1.
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
             ZWND   = ZZWND
             TAUWX  = 0.
             TAUWY  = 0.
@@ -1060,7 +1069,7 @@
                          WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD, &
                          TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN,  FMEAN1,      &
                              WNMEAN, AMAX, UABS, UDIRR,             &
 #ifdef W3_FLX5
@@ -1109,17 +1118,17 @@
                          WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD, &
                          TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
               CALL W3SIN4 (A, CG, WN2, UABS, USTAR, DAIR/DWAT,   &
                            ASO(J), UDIRR, Z0, CD, TAUWX, TAUWY,  &
                            TAUWNX, TAUWNY, XWI, DIA, LLWS, IX, IY, LAMBDA )
-                  CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN,  FMEAN1,      &
-                             WNMEAN, AMAX, UABS, UDIRR,               &
+              CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN,  FMEAN1,      &
+                           WNMEAN, AMAX, UABS, UDIRR,               &
 #ifdef W3_FLX5
-                             TAUA, TAUADIR, RHOAIR,             &
+                           TAUA, TAUADIR, RHOAIR,             &
 #endif
-                             USTAR, USTD, TAUWX, TAUWY, CD, Z0,       &
-                             CHARN, LLWS, FMEANWS, DLWMEAN )
+                           USTAR, USTD, TAUWX, TAUWY, CD, Z0,       &
+                           CHARN, LLWS, FMEANWS, DLWMEAN )
 #endif
 #ifdef W3_FLX2
               CALL W3FLX2 ( ZWND, DEPTH, FP, UABS, UDIRR,        &
@@ -1153,7 +1162,7 @@
                              TAUWX, TAUWY, TAUWNX, TAUWNY,       &
                              ICE, XWI, DIA, LLWS, IX, IY )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 CALL W3SIN4 (A, CG, WN2, UABS, USTAR, DAIR/DWAT, &
                              ASO(J), UDIRR, Z0, CD,              &
                              TAUWX, TAUWY, TAUWNX, TAUWNY,       &
@@ -1199,6 +1208,9 @@
 #ifdef W3_ST6
                 CALL W3SDS6 ( A, CG, WN,            XDS, DIA )
                 IF (SWL6S6) CALL W3SWL6 ( A, CG, WN,  XWL, DIA )
+#endif
+#ifdef W3_STX
+                CALL W3SDSX(A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
 #endif
 !
 #ifdef W3_DB1

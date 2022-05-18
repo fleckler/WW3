@@ -1180,6 +1180,11 @@
       USE W3SWLDMD, ONLY : W3SWL6
       USE W3GDATMD, ONLY : SWL6S6
 #endif
+#ifdef W3_STX
+      USE W3SRCXMD, ONLY : W3SDSX
+      USE W3SRC4MD, ONLY : W3SPR4, W3SIN4
+      USE W3GDATMD, ONLY : ZZWND, FFXFM, FFXPM, FFXFA
+#endif
 #ifdef W3_NL1
       USE W3SNL1MD
 #endif
@@ -1265,7 +1270,7 @@
       REAL                    :: AMAX, FMEANS, FMEANWS, TAUWX, TAUWY, &
                                  TAUWNX, TAUWNY
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       REAL                    :: AMAX, FMEANS, FMEANWS, TAUWX, TAUWY, &
                                  TAUWNX, TAUWNY, FMEAN1, WHITECAP(1:4), DLWMEAN
 #endif
@@ -1302,9 +1307,12 @@
 #ifdef W3_ST3
       LOGICAL                 :: LLWS(NSPEC)
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       LOGICAL                 :: LLWS(NSPEC)
       REAL                    :: LAMBDA(NSPEC)
+#endif
+#ifdef W3_STX
+      REAL                    :: C(NSPEC)
 #endif
       CHARACTER               :: DTME21*23
       CHARACTER(LEN=4)         VAR1(6)
@@ -1631,7 +1639,7 @@
                 TAUWY  = 0.
                 LLWS(:)  = .TRUE.
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 LLWS(:)  = .TRUE.
                 ZWND   = ZZWND
                 TAUWX  = 0.
@@ -1655,7 +1663,7 @@
                              WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD,&
                              TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN,  FMEAN1,      &
                              WNMEAN, AMAX, UABS, UDIRR,             &
 #ifdef W3_FLX5
@@ -1705,7 +1713,7 @@
                              WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD,&
                              TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                   IX=1
                   IY=1
                   CALL W3SIN4 ( A, CG, WN2, UABS, USTAR, DAIR/DWAT,&
@@ -1802,7 +1810,7 @@
                 TAUWX  = 0.
                 TAUWY  = 0.
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 ZWND   = ZZWND
                 USTAR  = 0.
                 USTD   = 0.
@@ -1832,7 +1840,7 @@
                              WNMEAN, AMAX, UABS, UDIRR, USTAR, USTD,&
                              TAUWX, TAUWY, CD, Z0, CHARN, LLWS, FMEANWS )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN,  FMEAN1,        &
                              WNMEAN, AMAX, UABS, UDIRR,               &
 #ifdef W3_FLX5
@@ -1881,7 +1889,7 @@
                                 ASO(J), UDIRR, Z0, CD,TAUWX, TAUWY, &
                                 TAUWNX, TAUWNY, ICE, XIN, DIA, LLWS, IX, IY )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                 CALL W3SPR4 (A, CG, WN, EMEAN, FMEAN, FMEAN1,        &
                              WNMEAN, AMAX, UABS, UDIRR,              &
 #ifdef W3_FLX5
@@ -1925,7 +1933,7 @@
                             Z0, CD, TAUWX, TAUWY,TAUWNX, TAUWNY, &
                             ICE, XIN, DIA, LLWS, IX, IY )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
                     CALL W3SIN4 ( A, CG, WN2, UABS, USTAR,       &
                                   DAIR/DWAT, ASO(J), UDIRR,      &
                             Z0, CD, TAUWX, TAUWY,TAUWNX, TAUWNY, &
@@ -1970,6 +1978,9 @@
 #ifdef W3_ST6
                     CALL W3SDS6 ( A, CG, WN,            XDS, DIA )
                     IF (SWL6S6) CALL W3SWL6 ( A, CG, WN,  XWL, DIA )
+#endif
+#ifdef W3_STX
+					CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
 #endif
 !
 #ifdef W3_DB1

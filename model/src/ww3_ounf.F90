@@ -3462,7 +3462,7 @@
 !
       USE W3GDATMD, ONLY : GTYPE, FLAGLL, UNGTYPE, CLGTYPE, RLGTYPE
 #ifdef W3_RTD
- ! Rotated pole parameters from the mod_def file
+      ! Rotated pole parameters from the mod_def file
       USE W3GDATMD, ONLY : POLAT, POLON
 #endif
       USE NETCDF
@@ -3884,12 +3884,22 @@
         CALL CHECK_ERR(IRET)
         IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'WAVEWATCH_III_switches',TRIM(SWITCHES))
         CALL CHECK_ERR(IRET)
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       IF (ZZWND.NE.10)      IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SIN4 namelist parameter ZWD',ZZWND)
       IF (AALPHA.NE.0.0095) IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SIN4 namelist parameter ALPHA0',AALPHA)
       IF (BBETA.NE.1.43)    IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SIN4 namelist parameter BETAMAX',BBETA)
+#endif
+#ifdef W3_ST4
       IF(SSDSC(7).NE.0.3)   IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SDS4 namelist parameter WHITECAPWIDTH', SSDSC(7))
 #endif
+!#ifdef W3_STX
+!      IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SDSX namelist parameter ALPHA_BK', SDSX_ALPHA_BK)
+!      IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SDSX namelist parameter B_DISSIP', SDSX_B_DISSIP)
+!      IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SDSX namelist parameter WHITECAP_WIDTH', SDSX_WHITECAP_WIDTH)
+!      IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SDSX namelist parameter LW_MODULATION', SDSX_LW_MODULATION)
+!      IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SDSX namelist parameter NUC', SDSX_NUC)
+!      IRET=NF90_PUT_ATT(NCID,NF90_GLOBAL,'SDSX namelist parameter NCP', SDSX_NCP)
+!#endif
 ! ... TO BE CONTINUED ...
 
         IF(SMCGRD) THEN

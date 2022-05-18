@@ -188,7 +188,9 @@
          ! Wave height (hs in m)
          ! ---------------------------------------------------------------------
          IF (SND_FLD(IB_DO)%CL_FIELD_NAME == 'WW3__OHS') THEN
-            RLA_OASIS_SND(:,1) = DBLE(HS(1:NSEAL))
+            TMP(1:NSEAL) = 0.0
+            WHERE(HS(1:NSEAL) /= UNDEF) TMP(1:NSEAL)=HS(1:NSEAL)
+            RLA_OASIS_SND(:,1) = DBLE(TMP(1:NSEAL))
             CALL CPL_OASIS_SND(IB_DO, ID_OASIS_TIME, RLA_OASIS_SND, LL_ACTION)
          ENDIF
          !

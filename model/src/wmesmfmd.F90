@@ -162,7 +162,7 @@
 #ifdef W3_ST3
       use W3SRC3MD, only: W3SPR3
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
       use W3SRC4MD, only: W3SPR4
 #endif
       use W3IOGOMD, only: W3OUTG
@@ -6151,7 +6151,7 @@
                          u10(isea), u10d(isea), ustar, ustdr, tauwx, &
                          tauwy, cd, z0, charn(jsea), llws, fmeanws )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
             llws(:) = .true.
             ustar = zero
             ustdr = zero
@@ -6291,7 +6291,7 @@
                            u10(isea), u10d(isea), ustar, ustdr, tauwx, &
                            tauwy, cd, z0, charn(jsea), llws, fmeanws )
 #endif
-#ifdef W3_ST4
+#if defined(W3_ST4) || defined(W3_STX)
               llws(:) = .true.
               ustar = zero
               ustdr = zero
