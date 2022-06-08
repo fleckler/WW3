@@ -2165,8 +2165,8 @@
 #ifdef W3_STX
       ALPHA_BK       = 0.30
       LW_MODULATION  = .TRUE.
-      NUC            = 51
-      NCP            = (NK*10) -1
+      NUC            = 21
+      NCP            = NK
       B_DISSIP       = 0.005 
       WHITECAP_WIDTH = 0.18
 #endif

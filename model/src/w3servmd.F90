@@ -582,8 +582,12 @@
 !/
 !/ ------------------------------------------------------------------- /
 !/
-     DIST_SPHERE=acos(sin(la2*DERA)*sin(la1*DERA)+ &   
-                      cos(la2*DERA)*cos(la1*DERA)*cos((lo2-lo1)*DERA))*RADE
+     IF ( (LO1 .EQ. LO2) .AND. (LA1 .EQ. LA2) ) THEN
+         DIST_SPHERE=0.0
+     ELSE 
+         DIST_SPHERE=acos(sin(la2*DERA)*sin(la1*DERA)+ &   
+                          cos(la2*DERA)*cos(la1*DERA)*cos((lo2-lo1)*DERA))*RADE
+         END IF
 !
       RETURN
 !/

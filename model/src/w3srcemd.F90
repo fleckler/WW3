@@ -655,7 +655,8 @@
       REAL                    :: BRLAMBDA(NSPEC)
 #endif
 #ifdef W3_STX
-      REAL                    :: C(NSPEC) 
+      REAL                    :: C(NSPEC)
+      REAL                    :: BRLAMBDA2(NSPEC) 
 #endif
 #ifdef W3_IS2
       DOUBLE PRECISION        :: SCATSPEC(NTH)
@@ -877,6 +878,7 @@
 #endif
 #ifdef W3_STX
       C(:)=0.
+      BRLAMBDA2(:)=0.
 #endif
 !
 ! 1.c Set mean parameters
@@ -1162,7 +1164,7 @@
         CALL W3SDS6 ( SPEC, CG1, WN1,                   VSDS, VDDS )
 #endif
 #ifdef W3_STX
-        CALL W3SDSX ( SPEC, CG1, WN1, DEPTH, VSDS, VDDS, C, BRLAMBDA, WHITECAP)
+        CALL W3SDSX ( SPEC, CG1, WN1, DEPTH, VSDS, VDDS, C, BRLAMBDA, BRLAMBDA2, WHITECAP, .FALSE., IX, IY)
 #endif
 !
 #ifdef W3_PDLIB

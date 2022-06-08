@@ -1613,7 +1613,7 @@
       REAL                    :: LAMBDA(NSPEC), DLWMEAN
 #endif
 #ifdef W3_STX
-      REAL                    :: C(NSPEC)
+      REAL                    :: C(NSPEC), LAMBDA2(NSPEC)
 #endif
 #ifdef W3_ST6
       REAL                    :: AMAX, TAUWX, TAUWY, TAUWNX, TAUWNY
@@ -2141,7 +2141,7 @@
                               DIA, IX, IY, LAMBDA, WHITECAP, DLWMEAN )
 #endif
 #ifdef W3_STX
-                   CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+                   CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, LAMBDA2, WHITECAP, .TRUE.)
 #endif
                    CALL W3SIN4 (A, CG, WN2, UABS, USTAR, DAIR/DWAT,     &
                            ASO(J), UDIRR, Z0, CD, TAUWX, TAUWY, TAUWNX, &
@@ -2274,9 +2274,9 @@
                              DIA, IX, IY, LAMBDA, WHITECAP, DLWMEAN )
 #endif
 #ifdef W3_STX
-                print*, 'Reach  W3SDSX ...'
+                !print*, 'Reach  W3SDSX ...'
                 !print*, 'A=', A
-                CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+                CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, LAMBDA2, WHITECAP, .TRUE.)
                 !print*, 'XDS=', XDS
 #endif
 #endif
@@ -2378,7 +2378,7 @@
                               DIA, IX, IY, LAMBDA, WHITECAP, DLWMEAN )
 #endif
 #ifdef W3_STX
-                    CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+                    CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, LAMBDA2, WHITECAP, .TRUE.)
 #endif
                     CALL W3SIN4 (A, CG, WN2, UABS, USTAR, DAIR/DWAT,    &
                            ASO(J), UDIRR, Z0, CD, TAUWX, TAUWY, TAUWNX, &
@@ -2429,7 +2429,7 @@
                                   DIA, IX, IY, LAMBDA, WHITECAP , DLWMEAN)
 #endif
 #ifdef W3_STX
-                    CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+                    CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, LAMBDA2, WHITECAP, .TRUE.)
 #endif
 #endif
 #ifdef W3_ST6
@@ -2952,8 +2952,15 @@
               IF ( FLSRCE(4) )  IRET=NF90_PUT_VAR(NCID,VARID(23),   &
                  RESHAPE(C,(/NTH, NK/)),     start=(/1,1,J1,IOUT/), &
                  count=(/NTH,NK,1,1/)                               )
+#endif
+#if defined(W3_ST4) || defined(W3_STX)
               IF ( FLSRCE(4) )  IRET=NF90_PUT_VAR(NCID,VARID(24),   &
                  RESHAPE(LAMBDA,(/NTH, NK/)), start=(/1,1,J1,IOUT/), &
+                 count=(/NTH,NK,1,1/)                               )
+#endif
+#ifdef W3_STX
+              IF ( FLSRCE(4) )  IRET=NF90_PUT_VAR(NCID,VARID(25),   &
+                 RESHAPE(LAMBDA2,(/NTH, NK/)), start=(/1,1,J1,IOUT/), &
                  count=(/NTH,NK,1,1/)                               )
 #endif
               IF ( FLSRCE(5) )  IRET=NF90_PUT_VAR(NCID,VARID(20),   &
@@ -5441,7 +5448,9 @@
 #ifdef W3_RTD
             IRET=NF90_PUT_ATT(NCID,VARID(23),'direction_reference','Rotated Pole Grid North')
 #endif
+#endif
 
+#if defined(W3_ST4) || defined(W3_STX)
 ! lambda1
             IRET=NF90_DEF_VAR(NCID,'lambda1',NF90_FLOAT,(/DIMID(5),DIMID(4),DIMID(TWO),DIMID(ONE)/),VARID(24))
             IF (NCTYPE.EQ.4) IRET=NF90_DEF_VAR_DEFLATE(NCID, VARID(24), 1, 1, DEFLATE)
@@ -5457,23 +5466,24 @@
 #ifdef W3_RTD
             IRET=NF90_PUT_ATT(NCID,VARID(24),'direction_reference','Rotated Pole Grid North')
 #endif
-!
+#endif
+
+#ifdef W3_STX
 ! lambda2
-!            IRET=NF90_DEF_VAR(NCID,'lambda2',NF90_FLOAT,(/DIMID(5),DIMID(4),DIMID(TWO),DIMID(ONE)/),VARID(25))
-!            IF (NCTYPE.EQ.4) IRET=NF90_DEF_VAR_DEFLATE(NCID, VARID(25), 1, 1, DEFLATE)
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'long_name','breaking crest lenght density (modulated)')
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'units','m s rad-1')
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'scale_factor',1.)
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'add_offset',0.)
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'valid_min',0.)
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'valid_max',100.)
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'_FillValue',NF90_FILL_FLOAT)
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'content','TXYZ')
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'associates','time station frequency direction')
-!#ifdef W3_RTD
-!            IRET=NF90_PUT_ATT(NCID,VARID(25),'direction_reference','Rotated Pole Grid North')
-!#endif
-          
+            IRET=NF90_DEF_VAR(NCID,'lambda2',NF90_FLOAT,(/DIMID(5),DIMID(4),DIMID(TWO),DIMID(ONE)/),VARID(25))
+            IF (NCTYPE.EQ.4) IRET=NF90_DEF_VAR_DEFLATE(NCID, VARID(25), 1, 1, DEFLATE)
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'long_name','breaking crest lenght density (modulated)')
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'units','m s rad-1')
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'scale_factor',1.)
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'add_offset',0.)
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'valid_min',0.)
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'valid_max',100.)
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'_FillValue',NF90_FILL_FLOAT)
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'content','TXYZ')
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'associates','time station frequency direction')
+#ifdef W3_RTD
+            IRET=NF90_PUT_ATT(NCID,VARID(25),'direction_reference','Rotated Pole Grid North')
+#endif
 #endif
           ENDIF
 

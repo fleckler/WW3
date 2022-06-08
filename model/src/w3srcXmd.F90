@@ -19,7 +19,6 @@
 !  1. Purpose :
 !
 !     Dissipation by Leckler et al. (202X) : based on Gaussian field theory
-!     Wind input from ST6 parametrization
 !
 !  2. Variables and types :
 !
@@ -98,7 +97,7 @@
 !/ ------------------------------------------------------------------- /
 !/ ------------------------------------------------------------------- /
 !/
-      SUBROUTINE W3SDSX(A, CG, WN, DEPTH, S, D, CC, LAMBDA, WHITECAP)
+      SUBROUTINE W3SDSX(A, CG, WN, DEPTH, S, D, CC, LAMBDA, LAMBDA_MOD, WHITECAP, FLAG, IX, IY)
 !/
 !/                  +-----------------------------------+
 !/                  | WAVEWATCH III           NOAA/NCEP |
@@ -127,6 +126,8 @@
 !      D¹       R.A. O  Diagonal term of derivative
 !      CC¹      R.A. O  Speed of Phillips' Lambda
 !      LAMBDA¹  R.A. O  Breaking crest length density of Phillips' Lambda
+!      LAMBDA_MOD¹  R.A. O  Breaking crest length density including LWM
+!      FLAG     L.   I  Enable LAMBDA_MOD¹ computing (time consuming, default=F)
 !      ¹ Stored as 1-D array with dimension NTH*NK (column by column).
 !     ----------------------------------------------------------------
 !
@@ -174,17 +175,22 @@
                             SDSX_B_DISSIP, SDSX_LW_MODULATION,         &
                             SDSX_WHITECAP_WIDTH
       USE W3DISPMD,  ONLY : WAVNU1
+      USE W3ODATMD,  ONLY : IAPROC
 !/
       IMPLICIT NONE
 !/
 !/ ------------------------------------------------------------------- /
 !/ Parameter list
 !/
-      REAL, INTENT(IN)  :: A(NSPEC), CG(NK), WN(NK)
-      REAL, INTENT(IN)  :: DEPTH
-      REAL, INTENT(OUT) :: S(NSPEC), D(NSPEC)
-      REAL, INTENT(OUT) :: CC(NSPEC), LAMBDA(NSPEC)
-      REAL, INTENT(OUT) :: WHITECAP(1:4)
+      REAL, INTENT(IN)    :: A(NSPEC), CG(NK), WN(NK)
+      REAL, INTENT(IN)    :: DEPTH
+      REAL, INTENT(OUT)   :: S(NSPEC), D(NSPEC)
+      REAL, INTENT(OUT)   :: CC(NSPEC), LAMBDA(NSPEC), LAMBDA_MOD(NSPEC)
+      REAL, INTENT(OUT)   :: WHITECAP(1:4)
+
+      LOGICAL, INTENT(IN), OPTIONAL :: FLAG
+
+      INTEGER, INTENT(IN), OPTIONAL :: IX, IY
 !/
 !/ ------------------------------------------------------------------- /
 !/ Local parameters
@@ -219,7 +225,10 @@
       INTEGER                 :: IT
       REAL                    :: TSTR, TMAX, DT, T, MFT,  &
                                  COEF4(NK)
-                                 
+      LOGICAL                 :: COMP_FLAG                               
+
+      ! variable for debug (to be remove after debug)
+      real :: start, finish
 !/
 !/ ------------------------------------------------------------------- /
 !/
@@ -235,10 +244,17 @@
 !     **********************************************************
 !      
 
+      ! default : do not compute LAMBDA_MOD (time saving)
+      IF ( PRESENT(FLAG) ) THEN
+        COMP_FLAG=FLAG
+      ELSE
+        COMP_FLAG=.FALSE.
+        END IF
+
       ! initialyse ONCE variables
       IF ( FIRST ) THEN
-          CALL INSDSX
-          FIRST  = .FALSE.
+        CALL INSDSX
+        FIRST  = .FALSE.
         END IF
       
       ! Number of subroputine calls
@@ -342,16 +358,10 @@
         END DO
           
         ! compute min and max phase speed in current frequency window
+        CALL WAVNU1(0.7*SIGC,depth,TMP2,DUMMY)
         CALL WAVNU1(1.3*SIGC,depth,TMP1,DUMMY)
         CPWIN_MIN = (1.3*SIGC) / TMP1
-        
-        ! if LWM, "no" upper limit
-        IF (SDSX_LW_MODULATION) THEN
-            CPWIN_MAX = CP_MAX
-        ELSE
-            CALL WAVNU1(0.7*SIGC,depth,TMP2,DUMMY) 
-            CPWIN_MAX = (0.7*SIGC) / TMP2
-        END IF
+        CPWIN_MAX = (0.7*SIGC) / TMP2
         
         ! phase speed discretization (log)          
         CP = logspace(CPWIN_MIN, CPWIN_MAX, SDSX_NCP)
@@ -364,7 +374,7 @@
 
           ! crest speed range (only in "breaking zone")
           UC_MIN = CP(JJ) * SDSX_ALPHA_BK
-          UC_MAX = 5.00 * CP_MAX ! Upper limit could be optimized ????
+          UC_MAX = 3.00 * CP_MAX ! Upper limit could be optimized ????
         
           ! crest speed discretization (log)
           UC = logspace(UC_MIN, UC_MAX, SDSX_NUC)
@@ -409,10 +419,8 @@
           ! compute mvx (equals to m2)
           MVX = M2
         
-          ! save time 
-          ! empirical limit: MVX < 5.0e-4 <=> Q_BK = 0.0
-          ! empirical limits computed on 1pnt infinite ocean, to be check with complex sea states
-          !IF  (MVX .LT. 1.e-8 ) CYCLE
+          ! save time & avoid for floating over/underflow : empirical limit: MVX < 1.0e-5 => Q_BK = 0.0
+          IF  (MVX .LT. 1.e-5 ) CYCLE
           
           Q(:,:) = 0.0
           DO II = 1, 3
@@ -431,18 +439,13 @@
             END DO
           END DO          
 
-          ! avoid for "floating overflow" in matinv function (1./matdet3(Q))
-          IF ( matdet3(Q) .LE. tiny(Q) ) CYCLE 
-          
-          ! compute Uc-Cp joint probability function in current direction
-          UC_CP_PDF = PCV_fast(SDSX_NUC, SDSX_NCP, UC2, CP2, Q, MVX)
-          !print*, 'SDSX: Min/Max(UC_CP_PDF) [PCV_fast] = ', MINVAL(UC_CP_PDF), MAXVAL(UC_CP_PDF)
-          
-          !UC_CP_PDF = PCV(SDSX_NUC, SDSX_NCP, UC2, CP2, Q, MVX)
-          !print*, 'SDSX: Min/Max(UC_CP_PDF) [PCV]      = ', MINVAL(UC_CP_PDF), MAXVAL(UC_CP_PDF)
+          ! save time & avoid for floating over/underflow : empirical limit: max(abs(Q)) < 1.0e-5 => Q_BK = 0.0
+          IF  ( MAXVAL(ABS(Q)) .LT. 1.e-5 ) CYCLE
 
-          !IF ( ANY (ISNAN(UC_CP_PDF))   ) print*, 'NaN values found in UC_CP_PDF'
-          !IF ( ANY (UC_CP_PDF .LT. 0.0) ) print*, 'Negative values found in UC_CP_PDF :', PACK(UC_CP_PDF,(UC_CP_PDF .LT. 0.0))
+          ! compute Uc-Cp joint probability function in current direction
+          UC_CP_PDF = PCV_r8_fast(SDSX_NUC, SDSX_NCP, UC2, CP2, Q, MVX, IX, IY)
+          !UC_CP_PDF = PCV_fast(SDSX_NUC, SDSX_NCP, UC2, CP2, Q, MVX)
+          !UC_CP_PDF = PCV(SDSX_NUC, SDSX_NCP, UC2, CP2, Q, MVX)
 
           IF (.NOT. ANY (UC_CP_PDF .GT. 0.0) ) CYCLE
           
@@ -484,28 +487,34 @@
           !
           ! compute LAMBDA2(c) where c is the speed of breaking local maxima
           !
-          
-          DO IK2 = 1, NK
-                        
-            ! compute breaking probability Q_BK as the ratio of breaking local
-            ! maxima to total local maxima for local maxima between CP2(IK)  
-            ! and CP1(IK)
-            Q_BK = 0.0
-            DO JJ = 1, SDSX_NCP
-              IF ( (C2(IK2) .LE. CP(JJ)) .AND. (CP(JJ) .LE. C1(IK2)) ) THEN
-                Q_BK = Q_BK + CP_PDF(JJ) * DCP(JJ)
-              END IF
-            END DO
 
-            ! add breaking wave from current wave scale in LAMBDA2
-            IF (Q_BK .GT. 0.0) THEN
-              LAMBDA2(ITH,IK2) = LAMBDA2(ITH,IK2) + &
-                                   LM_DENSITY(ITH,IK) * (Q_BK/FCORFACT(IK))  / (C1(IK2) - C2(IK2))
-            END IF
-                        
-          END DO
+          IF ( COMP_FLAG ) THEN
           
-          !print*, 'SDSX: LAMBDA2(ITH,IK)    = ', LAMBDA2(ITH,IK)
+            DO IK2 = 1, NK
+                        
+              ! compute breaking probability Q_BK as the ratio of breaking local
+              ! maxima to total local maxima for local maxima between CP2(IK)  
+              ! and CP1(IK)
+              Q_BK = 0.0
+              DO JJ = 1, SDSX_NCP
+                IF ( (C2(IK2) .LE. CP(JJ)) .AND. (CP(JJ) .LE. C1(IK2)) ) THEN
+                  Q_BK = Q_BK + CP_PDF(JJ) * DCP(JJ)
+                END IF
+              END DO
+
+              ! add breaking wave from current wave scale in LAMBDA2
+              IF (Q_BK .GT. 0.0) THEN
+                LAMBDA2(ITH,IK2) = LAMBDA2(ITH,IK2) + &
+                                     LM_DENSITY(ITH,IK) * (Q_BK/FCORFACT(IK))  / (C1(IK2) - C2(IK2))
+              END IF
+                        
+            END DO
+          
+            !print*, 'SDSX: LAMBDA2(ITH,IK)    = ', LAMBDA2(ITH,IK)
+
+            END IF
+
+            
           
         END DO ! end of loop over directions
       END DO ! end of loop over frequencies
@@ -530,7 +539,6 @@
         SDS2(:,IK) = FACTOR * LAMBDA2(:,IK)
             
       END DO
-
 !
 ! 3. prepare output
 !
@@ -540,7 +548,8 @@
       DO IK = 1, NK
         DO ITH = 1, NTH
           IS = ITH + (IK-1)*NTH
-          LAMBDA(IS) = LAMBDA2(ITH,IK)
+          LAMBDA    (IS) = LAMBDA1(ITH,IK)
+          LAMBDA_MOD(IS) = LAMBDA2(ITH,IK)
         END DO
       END DO
       
@@ -561,6 +570,7 @@
       ELSEWHERE
       	D = 0.0
       END WHERE
+
 !
 !  COMPUTES WHITECAP PARAMETERS
 !
@@ -1458,7 +1468,7 @@
                                * ( erf(0.5*SQRT(2.)*phi)+1.)    &
                                * EXP(0.5*(phi**2-alpha))) &
                              + 2.*phi*EXP(-0.5*alpha)     )
-!
+
 !
 !/
 !/ End of PCV ----------------------------------------------------- /
@@ -1527,6 +1537,7 @@
 !/ ------------------------------------------------------------------- /
 !/
       USE CONSTANTS, ONLY : TPI
+      USE W3ODATMD,  ONLY : IAPROC
 !
       IMPLICIT NONE
 !/
@@ -1549,6 +1560,8 @@
       REAL, DIMENSION(3,3)               :: Qinv
       REAL                               :: xi, alpha, rho, phi
       INTEGER                            :: ii, jj
+
+      character(len=1024)                :: filename
 !/
 !/ ------------------------------------------------------------------- /
 !/
@@ -1581,7 +1594,6 @@
           ! compute xi 
           xi = (Qinv(1,1) - Cp(ii,jj) * Qinv(2,1)) - Cp(ii,jj) * (Qinv(1,2) - Cp(ii,jj) * Qinv(2,2)) 
     
-          ! compute rho
           rho = 2. * Uc(ii,jj)  * (Qinv(1,3) - Cp(ii,jj) *Qinv(2,3))    
     
           ! compute alpha
@@ -1589,6 +1601,25 @@
       
           ! compute phi
           phi = 0.5 * (rho / SQRT(xi))
+
+          ! debug (over/under flow numbers)
+          !write (filename,'(A5,I0.3,A4)') "proc_", IAPROC, ".out"
+          !open(2000+IAPROC, file=filename, action='WRITE') 
+          !write(2000+IAPROC,*) "###############"
+          !write(2000+IAPROC,*) "xi    = ", xi 
+          !write(2000+IAPROC,*) "rho   = ", rho
+          !write(2000+IAPROC,*) "alpha = ", alpha
+          !write(2000+IAPROC,*) "phi   = ", phi
+          !write(2000+IAPROC,*) "ceta  = ", ceta
+          !write(2000+IAPROC,*) "N1    = ", N1
+          !write(2000+IAPROC,*) "TPI   = ", TPI
+          !write(2000+IAPROC,*) "zeta0 = ", zeta0
+          !write(2000+IAPROC,*) "(zeta0*ceta/N1) / (xi**1.5) = ",  (zeta0*ceta/N1) / (xi**1.5)
+          !write(2000+IAPROC,*) "SQRT(TPI) * (phi**2+1.)     = ", SQRT(TPI) * (phi**2+1.)
+          !write(2000+IAPROC,*) "erf(0.5*SQRT(2.)*phi)+1.    = ", erf(0.5*SQRT(2.)*phi)+1.
+          !write(2000+IAPROC,*) "EXP(0.5*(phi**2-alpha)))    = ", EXP(0.5*(phi**2-alpha))
+          !write(2000+IAPROC,*) "2.*phi*EXP(-0.5*alpha)      = ", 2.*phi*EXP(-0.5*alpha)          
+          !close(2000+IAPROC)
 
           ! compute Uc-Cp PDF
           Uc_Cp_pdf(ii,jj) =  0.5 * (zeta0*ceta/N1) / (xi**1.5)     &
@@ -1607,6 +1638,175 @@
 !/ End of PCV_fast --------------------------------------------------- /
 !/
       END FUNCTION PCV_fast
+!/ ------------------------------------------------------------------- /
+      FUNCTION PCV_r8_fast(Nuc, Ncp, Uc, Cp, Q, mvx, IX, IY) RESULT(Uc_Cp_pdf)
+!/
+!/                  +-----------------------------------+
+!/                  | WAVEWATCH III           NOAA/NCEP |
+!/                  |            F. Leckler             |
+!/                  |                        FORTRAN 90 |
+!/                  | Last update :         15-Sep-2021 |
+!/                  +-----------------------------------+
+!/
+!/    15-Sep-2021 : Origination.                        ( version 6.XX )
+!/
+!  1. Purpose :
+!
+!     Function that returns the Uc-Cp PDF. See Leckler at al. (202X) for
+!     details. Same as PCV_fast function but calculation are internally 
+!     done in DOUBLE PRECISION
+!
+!  2. Method :
+!
+!  3. Parameters :
+!
+!     Parameter list
+!     ----------------------------------------------------------------
+!      Q          R.A. I. Covariance 3x3 matrix
+!      mcx        Real I.
+!      Uc         R.A. I. Crest fluid speed vector
+!      Cp         R.A. I. Phase speed vector
+!      Uc_Cp_PDF  R.A. 0. Uc-Cp PDF
+!     ----------------------------------------------------------------
+!
+!  4. Subroutines used :
+!
+!      Name      Type  Module   Description
+!     ----------------------------------------------------------------
+!      STRACE    Subr. W3SERVMD Subroutine tracing.
+!     ----------------------------------------------------------------
+!
+!  5. Called by :
+!
+!      Name      Type  Module   Description
+!     ----------------------------------------------------------------
+!      W3SDSX    Subr. W3SRCXMD Dissipative source term computation.
+!     ----------------------------------------------------------------
+!
+!  6. Error messages :
+!
+!       None.
+!
+!  7. Remarks :
+!
+!  8. Structure :
+!
+!     See source code.
+!
+!  9. Switches :
+!
+!     !/S  Enable subroutine tracing.
+!
+! 10. Source code :
+!
+!/ ------------------------------------------------------------------- /
+!/
+      USE CONSTANTS, ONLY : TPI
+      USE W3ODATMD,  ONLY : IAPROC
+!
+      IMPLICIT NONE
+!/
+!/ ------------------------------------------------------------------- /
+!/ Parameter list
+!/
+      INTEGER,                   INTENT(IN)  :: Nuc, Ncp
+      REAL, DIMENSION(Nuc,Ncp),  INTENT(IN)  :: Uc, Cp
+      REAL,                      INTENT(IN)  :: Q(3,3)
+      REAL,                      INTENT(IN)  :: mvx
+
+      INTEGER, OPTIONAL,         INTENT(IN)  :: IX, IY
+
+      REAL, DIMENSION(Nuc,Ncp)               :: Uc_Cp_pdf
+!/
+!/ ------------------------------------------------------------------- /
+!/ Local parameters
+!/
+#ifdef W3_S
+      INTEGER, SAVE           :: IENT = 0
+#endif
+
+      DOUBLE PRECISION,PARAMETER  :: TPI_r8 = 2.0D0 * 3.141592653589793D0
+
+      DOUBLE PRECISION, DIMENSION(Nuc,Ncp)  :: Uc_r8, Cp_r8
+      DOUBLE PRECISION                      :: Q_r8(3,3), Qinv_r8(3,3)
+      DOUBLE PRECISION                      :: mvx_r8
+      DOUBLE PRECISION, DIMENSION(Nuc,Ncp)  :: Uc_Cp_pdf_r8
+
+      DOUBLE PRECISION                      :: N1_r8, detQ_r8, ceta_r8, zeta0_r8
+      DOUBLE PRECISION                      :: xi_r8, alpha_r8, rho_r8, phi_r8
+      INTEGER                               :: ii, jj
+
+      character(len=1024)                   :: filename
+
+      DOUBLE PRECISION                      :: var1_r8
+
+
+!/
+!/ ------------------------------------------------------------------- /
+!/
+#ifdef W3_S
+      CALL STRACE (IENT, 'PCV_r8_fast')
+#endif
+!
+      ! initialyse
+      Uc_Cp_pdf_r8(:,:) = 0.0
+
+      ! convert inputs to double precision
+      Uc_r8  = dble(Uc)
+      Cp_r8  = dble(Cp)
+      Q_r8   = dble(Q)
+      mvx_r8 = dble(mvx)
+
+      ! compute the inverse of the covariance matrix
+      Qinv_r8 = dble(matinv3(Q))
+        
+      ! compute N1
+      N1_r8 = (Q_r8(1,1)/mvx_r8)**0.5 / TPI_r8
+
+      ! compute zeta0
+      zeta0_r8 = 1. / (SQRT(TPI_r8*mvx_r8)) ;
+
+      ! compute determinant of matrix Q
+      detQ_r8 = dble(matdet3(Q))
+
+      ! compute ceta
+      ceta_r8  = 1.0D0 / SQRT(TPI_r8**3 * detQ_r8)
+
+      DO jj = 1, Ncp
+        DO ii = 1, Nuc
+
+          ! compute xi
+          xi_r8 = (Qinv_r8(1,1) - Cp_r8(ii,jj) * Qinv_r8(2,1)) - Cp_r8(ii,jj) * (Qinv_r8(1,2) - Cp_r8(ii,jj) * Qinv_r8(2,2))
+
+          ! compute rho
+          rho_r8 = 2.0D0 * Uc_r8(ii,jj)  * (Qinv_r8(1,3) - Cp_r8(ii,jj) *Qinv_r8(2,3))
+
+          ! compute alpha
+          alpha_r8 = Uc_r8(ii,jj)**2 *  Qinv_r8(3,3)
+
+          ! compute phi
+          phi_r8 = 0.5D0 * (rho_r8 / SQRT(xi_r8))
+
+          ! compute Uc-Cp PDF
+          Uc_Cp_pdf_r8(ii,jj) =  0.5D0 * (zeta0_r8*ceta_r8/N1_r8) / (xi_r8**1.5)     &
+                                       * ( SQRT(TPI_r8) * (phi_r8**2+1.0D0)          &
+                                           * ( erf(0.5D0*SQRT(2.D0)*phi_r8)+1.0D0)   &
+                                           * EXP(0.5D0*(phi_r8**2-alpha_r8)))        &
+                                         + 2.0D0*phi_r8*EXP(-0.5D0*alpha_r8)
+
+          ! when null value is reached for current Cp, stop loop on Uc
+          IF (Uc_Cp_pdf_r8(ii,jj) .LE. TINY(Uc_Cp_pdf) ) EXIT
+
+        END DO
+      END DO
+
+      ! convert to single precision
+      Uc_Cp_pdf = REAL(Uc_Cp_pdf_r8)
+!
+!/
+!/ End of PCV_r8_fast --------------------------------------------------- /
+!/
+      END FUNCTION PCV_r8_fast
 !/
 !/ End of module W3SRCXMD -------------------------------------------- /
 !/

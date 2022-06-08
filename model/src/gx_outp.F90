@@ -800,6 +800,7 @@
 #endif
 #ifdef W3_STX
       REAL                   :: C(NSPEC)
+      REAL                   :: LAMBDA2(NSPEC)
 #endif
       CHARACTER               :: DTME21*23
 !/
@@ -1210,7 +1211,7 @@
                 IF (SWL6S6) CALL W3SWL6 ( A, CG, WN,  XWL, DIA )
 #endif
 #ifdef W3_STX
-                CALL W3SDSX(A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, WHITECAP)
+                CALL W3SDSX ( A, CG, WN, DEPTH, XDS, DIA, C, LAMBDA, LAMBDA2, WHITECAP, .TRUE.) 
 #endif
 !
 #ifdef W3_DB1
